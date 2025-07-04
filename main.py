@@ -1,24 +1,20 @@
-from fastapi import FastAPI, UploadFile, HTTPException
-import pandas as pd
-import io
+from fastapi import FastAPI
+from pydantic import BaseModel
 
 app = FastAPI()
 
-@app.post("/conta-palavras/")
-async def conta_palavras(ficheiro: UploadFile, coluna: str):
-    try:
-        conteudo = await ficheiro.read()
-        df = pd.read_csv(io.BytesIO(conteudo))
-        
-        if coluna not in df.columns:
-            raise HTTPException(status_code=400, detail=f"A coluna '{coluna}' não existe no ficheiro.")
-        
-        total_palavras = df[coluna].astype(str).str.split().str.len().sum()
-        
-        return {"total_palavras": int(total_palavras)}
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-        
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# Modelo de dados recebido
+class SubjectRequest(BaseModel):
+    subject: str
+
+@app.post("/contar_palavras")
+async def contar_palavras(dados: SubjectRequest):
+    subject = dados.subject
+
+    # Contar número de palavras (separa por espaços)
+    num_palavras = len(subject.split())
+
+    return {
+        "subject": subject,
+        "num_palavras": num_palavras
+    }
